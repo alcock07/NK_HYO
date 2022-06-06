@@ -15,7 +15,6 @@ Dim strCP As String
 
     strCP = CP_NAME
     If Trim(strCP) = "HB17" Then
-'    If Trim(strCP) = "V-SV02" Then
         Call Open_Log(strCP)
         Call Proc_TZ
         Call Close_Log(strCP)

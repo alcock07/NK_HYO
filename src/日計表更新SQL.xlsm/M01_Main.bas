@@ -12,6 +12,12 @@ Public Const MAX_COMPUTERNAME_LENGTH = 15
 
 Public strSQL    As String
 
+'===== 概略 =====
+'担当者ごとの売上日計データを作成する、毎日更新する
+'累積テーブル（NK_URI・NK_SRE）にセット
+'使用テーブル：Oracle（TANMTA・CLSMTA・BMNMTA・V_UDNTRA・V_SDNTRA）
+'              SQLServer（部門・支店・年度計画・修正計画・JUZTBZ_Hybrid）
+
 '=== 日計データ集計処理 ===
 Sub Proc_TZ()
 
@@ -42,13 +48,18 @@ End Sub
 Sub Proc_NKC(strDt As String, strCZ As String)
 
     '===================================================
-    '①作業テーブル作成
-    '②売上データ作成
-    '③営業計画から計画取得して売上データに入れる
-    '④受注残ﾃﾞｰﾀ取得して売上データに入れる
-    '⑤売上ﾄﾗﾝから当日売り取得して売上データに入れる
-    '⑥仕入データ作成
-    '⑦作業用から累積用へデータを入れる
+    '①作業テーブル（W_NKC）を作成
+    '②スパカクの担当者マスタ（TANMTA）と部門テーブルから担当者ごとの得意先レコードを作成
+    '　支店テーブルで補正
+    '　スパカクの名称マスタ（CLSMTA）と部門マスタ（BMNMTA）で補正
+    '　スパカクの売上トラン（V_UDNTRA）から担当者売上集計データ取得
+    '③年度計画テーブルと修正計画テーブルから計画データ取得
+    '④受注残（JUZTBZ_Hybrid）データ取得
+    '⑤スパカクの売上トラン（V_UDNTRA）から当日売上集計データ取得
+    '⑥作業テーブル（W_NKS）を作成
+    '  スパカクの担当者マスタ（TANMTA）と部門テーブルから担当者ごとの仕入先レコードを作成
+    '  スパカクの仕入トラン（V_SDNTRA）から担当者仕入集計データ取得
+    '⑦作業用（W_NKC・W_NKS）から累積用（NK_URI・NK_SRE）へデータを入れる
     
     Dim start_time As Double
     Dim end_time As Double
@@ -62,26 +73,17 @@ Sub Proc_NKC(strDt As String, strCZ As String)
     Call CR_TBL_NKC '作業テーブル作成
     end_time = Timer
     Debug.Print "CR_TBL_NKC " & (end_time - start_time)
-
-'2022.3.8 SQL移行のため部門区分不要
-'    start_time = Timer
-'    Call CR_TBL_KBN '部門区分作成
-'    end_time = Timer
-'    Debug.Print "CR_TBL_KBN " & (end_time - start_time)
     
-'    ②売上データ作成_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
+    '②売上データ作成_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
     Sheets("Wait").Range("D15") = "売上データ取得中・・・"
     Sheets("Wait").Range("D16") = ""
     DoEvents
-    
     start_time = Timer
     Call Get_TAN_Data(strDt)
     end_time = Timer
     Debug.Print "Get_TAN_Data " & (end_time - start_time)
 
     '③営業計画から計画取得_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
     Sheets("Wait").Range("D15") = "計画データ取得中・・・"
     DoEvents
     start_time = Timer
@@ -90,7 +92,6 @@ Sub Proc_NKC(strDt As String, strCZ As String)
     Debug.Print "Get_Plan " & (end_time - start_time)
 
     '④受注残ﾃﾞｰﾀ取得_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
     Sheets("Wait").Range("D15") = "受注データ取得中・・・"
     DoEvents
     start_time = Timer
@@ -99,7 +100,6 @@ Sub Proc_NKC(strDt As String, strCZ As String)
     Debug.Print "Get_JZAN " & (end_time - start_time)
     
     '⑤売上ﾄﾗﾝから当日売り取得_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
     Sheets("Wait").Range("D15") = "当日データ取得中・・・"
     DoEvents
     start_time = Timer
@@ -115,7 +115,6 @@ Sub Proc_NKC(strDt As String, strCZ As String)
     Call DEL_Nothing
     
     '⑥仕入ﾃﾞｰﾀ取得_/_/_/_/_/_/_/_/_/_/_/_/_/_/_//_/_/_/_/_/_/
-    
     Sheets("Wait").Range("D15") = "仕入データ取得中・・・"
     DoEvents
     start_time = Timer
@@ -125,7 +124,6 @@ Sub Proc_NKC(strDt As String, strCZ As String)
     Debug.Print "Get_SIRE " & (end_time - start_time)
 
     '⑦データを配信用DBへ_/_/_/_/_/_/_/_/_/_/_/_/_/_/_//_/_/_/
-    
     Sheets("Wait").Range("D15") = "終了処理中・・・"
     DoEvents
     start_time = Timer
@@ -138,7 +136,7 @@ Sub Proc_NKC(strDt As String, strCZ As String)
     start_time = Timer
     Call DR_TBL_NKC '作業テーブル削除
     Call DR_TBL_NKS '作業テーブル削除
-    Call DR_TBL_KBN '部門区分削除
+'    Call DR_TBL_KBN '部門区分削除
     end_time = Timer
     Debug.Print "DR_TBL " & (end_time - start_time)
     

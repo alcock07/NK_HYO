@@ -166,18 +166,7 @@ Exit_DB:
 End Sub
 
 '計画データ処理
-'（営業計画.accdbから計画データ取得)
 Sub Get_Plan(ByVal strDate As String)
-
-'    Const DBP As String = "\\192.168.128.4\hb\sys\営業計画\営業計画.accdb" '2020.10.20変更 TAKA
-    
-'    Dim cnW    As ADODB.Connection
-'    Dim cnP    As ADODB.Connection
-'    Dim rsW    As ADODB.Recordset
-'    Dim rsP    As ADODB.Recordset
-'    Dim strNT  As String
-'    Dim strCD  As String '担当者コード
-'    Dim lngD   As Long
 
     Dim cnW    As ADODB.Connection
     Dim rsW    As ADODB.Recordset
@@ -188,14 +177,6 @@ Sub Get_Plan(ByVal strDate As String)
     Dim strCD  As String '担当者コード
     Dim lngD   As Long   '月
     
-'    Const SQL2 As String = " GROUP BY 担当者コード HAVING (((担当者コード)='"
-'    Const SQL3 As String = "'))"
-
-'    '計画データ(ACCESS)
-'    Set cnP = New ADODB.Connection
-'    cnP.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0; Data Source=" & DBP
-'    cnP.Open
-'    Set rsP = New ADODB.Recordset
     
     lngD = CLng(Mid(strDate, 5, 2))
     
@@ -208,9 +189,6 @@ Sub Get_Plan(ByVal strDate As String)
     cnW.Open
     Set Cmd.ActiveConnection = cnW
     strSQL = "SELECT * FROM W_NKC"
-'    Cmd.CommandText = strSQL
-'    Set rsW = Cmd.Execute
-    
     rsW.Open strSQL, cnW, adOpenStatic, adLockOptimistic
     rsW.MoveFirst
     If rsW.EOF = False Then rsW.MoveFirst
@@ -305,10 +283,6 @@ Exit_DB:
         If rsP.State = adStateOpen Then rsP.Close
         Set rsP = Nothing
     End If
-'    If Not cnP Is Nothing Then
-'        If cnP.State = adStateOpen Then cnP.Close
-'        Set cnP = Nothing
-'    End If
     If Not rsW Is Nothing Then
         If rsW.State = adStateOpen Then rsW.Close
         Set rsW = Nothing
@@ -412,18 +386,6 @@ Sub Get_URI(strDate As String, strTime As String)
     rsA.MoveFirst
     Do Until rsA.EOF
         strCODE = rsA.Fields("TANCD")
-'        strSQL = ""
-'        strSQL = strSQL & "SELECT * FROM OPENQUERY ([ORA],"
-'        strSQL = strSQL & "             'SELECT UDNDT,"
-'        strSQL = strSQL & "                     TANCD,"
-'        strSQL = strSQL & "                     URIKN,"
-'        strSQL = strSQL & "                     GNKKN,"
-'        strSQL = strSQL & "                     ZKMUZEKN"
-'        strSQL = strSQL & "              FROM UDNTRA"
-'        strSQL = strSQL & "                     WHERE UDNDT = ''" & strDate & "''"
-'        strSQL = strSQL & "                     AND DATKB = ''1''"
-'        strSQL = strSQL & "                     AND TANCD = ''" & strCODE & "''')"
-        'V_UDNTRA---SELECT TANCD,TOKCD,HINCD,UDNDT,SMADT,DENKB,URIKN,GNKKN,ZKMUZEKN FROM TRI_USR1.UDNTRA WHERE (DATKB='1') and ((URIKN<>0) or (GNKKN<>0))
         strSQL = ""
         strSQL = strSQL & "SELECT * FROM OPENQUERY ([ORA],"
         strSQL = strSQL & "             'SELECT UDNDT,"
@@ -570,7 +532,6 @@ Sub Get_SIRE(ByVal strDate As String)
     rsA.MoveFirst
     Do Until rsA.EOF
         strCODE = rsA.Fields("TANCD")
-        'select  TANCD,SIRCD,HINCD,SDNDT,SMADT,DENKB,SREKN from TRI_USR1.SDNTRA where (DATKB='1') and (SREKN<>0)
         strSQL = ""
         strSQL = strSQL & "SELECT * FROM OPENQUERY ([ORA],"
         strSQL = strSQL & "                         'SELECT sum(SREKN)"
